@@ -17,6 +17,13 @@ async function run() {
     try {
         await client.connect();
         const toolCollection = client.db("electronic_tool").collection("tools");
+
+        app.get("/tools", async (req, res) => {
+            const query = {};
+            const cursor = toolCollection.find(query);
+            const tools = await cursor.toArray();
+            res.send(tools);
+        })
     }
     finally {
 
