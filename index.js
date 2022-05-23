@@ -14,6 +14,23 @@ const uri = `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: "Unauthorized" })
+    }
+    const token = authHeader.split(" ")[1];
+    jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.send(403).send({ message: Forbidden })
+        }
+        req.decoded = decoded;
+        next();
+    });
+
+}
+
+
 async function run() {
     try {
         await client.connect();
@@ -52,11 +69,19 @@ async function run() {
         })
 
         // get booking data
-        app.get("/booking", async (req, res) => {
+        app.get("/booking", verifyJWT, async (req, res) => {
             const clientEmail = req.query.clientEmail;
-            const query = { clientEmail: clientEmail };
-            const booking = await bookingCollection.find(query).toArray();
-            res.send(booking);
+            const decodedEmail = req.decoded.email;
+            if (clientEmail === decodedEmail) {
+                const query = { clientEmail: clientEmail };
+                const booking = await bookingCollection.find(query).toArray();
+                res.send(booking);
+            }
+            else {
+                return res.status(403),
+                    send({ message: "Forbidden" })
+            }
+
         })
 
         // booking data 
