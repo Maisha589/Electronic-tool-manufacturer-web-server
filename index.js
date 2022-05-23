@@ -19,6 +19,21 @@ async function run() {
         await client.connect();
         const toolCollection = client.db("electronic_tool").collection("tools");
         const bookingCollection = client.db("electronic_tool").collection("bookings");
+        const userCollection = client.db("electronic_tool").collection("users");
+
+        // user data
+        app.put("/user/:email", async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: { user }
+            }
+            const token = jwt.sign({ email: email }, process.env.JSON_WEB_TOKEN_SECRET, { expiresIn: "1h" })
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send({ result, token });
+        })
 
         // All tools
         app.get("/tools", async (req, res) => {
