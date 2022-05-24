@@ -136,11 +136,17 @@ async function run() {
             }
         })
 
-        // booked data 
+        // book data 
         app.post("/booking", async (req, res) => {
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
             res.send(result);
+        })
+
+        // Get review
+        app.get("/review", async (req, res) => {
+            const reviews = await reviewCollection.find().toArray();
+            res.send(reviews);
         })
 
         // Add review
