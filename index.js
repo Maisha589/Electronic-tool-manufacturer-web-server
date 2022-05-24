@@ -52,6 +52,12 @@ async function run() {
             res.send({ result, token });
         })
 
+        // All user data
+        app.get("/user", async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
+
         // All tools
         app.get("/tools", async (req, res) => {
             const query = {};
