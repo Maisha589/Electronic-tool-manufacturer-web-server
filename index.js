@@ -37,6 +37,7 @@ async function run() {
         const toolCollection = client.db("electronic_tool").collection("tools");
         const bookingCollection = client.db("electronic_tool").collection("bookings");
         const userCollection = client.db("electronic_tool").collection("users");
+        const reviewCollection = client.db("electronic_tool").collection("reviews");
 
         // middleware
         const verifyAdmin = async (req, res, next) => {
@@ -115,14 +116,14 @@ async function run() {
         })
 
         // get all booking order data
-        app.get("/booking", async (req, res) => {
+        app.get("/booking", verifyJWT, verifyAdmin, async (req, res) => {
             const bookings = await bookingCollection.find().toArray();
             res.send(bookings);
         })
 
 
         // get booking data per user
-        app.get("/booking", verifyJWT, async (req, res) => {
+        app.get("/booking/user", verifyJWT, async (req, res) => {
             const clientEmail = req.query.clientEmail;
             const decodedEmail = req.decoded.email;
             if (clientEmail === decodedEmail) {
@@ -142,6 +143,12 @@ async function run() {
             res.send(result);
         })
 
+        // Add review
+        app.post("/review", async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
 
     }
     finally {
