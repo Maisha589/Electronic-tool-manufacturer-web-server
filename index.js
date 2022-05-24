@@ -99,7 +99,14 @@ async function run() {
             res.send(tools);
         })
 
-        // single tool
+        // tools add
+        app.post("/tools", verifyJWT, async (req, res) => {
+            const tool = req.body;
+            const result = await toolCollection.insertOne(tool);
+            res.send(result);
+        })
+
+        // single purchase
         app.get("/purchase/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -107,7 +114,14 @@ async function run() {
             res.send(purchase);
         })
 
-        // get booking data
+        // get all booking order data
+        app.get("/booking", async (req, res) => {
+            const bookings = await bookingCollection.find().toArray();
+            res.send(bookings);
+        })
+
+
+        // get booking data per user
         app.get("/booking", verifyJWT, async (req, res) => {
             const clientEmail = req.query.clientEmail;
             const decodedEmail = req.decoded.email;
@@ -117,13 +131,11 @@ async function run() {
                 res.send(booking);
             }
             else {
-                return res.status(403),
-                    send({ message: "Forbidden" })
+                return res.status(403).send({ message: "Forbidden" })
             }
-
         })
 
-        // booking data 
+        // booked data 
         app.post("/booking", async (req, res) => {
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
