@@ -121,6 +121,13 @@ async function run() {
             res.send(bookings);
         })
 
+        // get booking for payment
+        app.get('/booking/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingCollection.findOne(query);
+            res.send(booking);
+        })
 
         // get booking data per user
         app.get("/booking/user", verifyJWT, async (req, res) => {
