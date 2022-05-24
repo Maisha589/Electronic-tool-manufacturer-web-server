@@ -22,7 +22,7 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            return res.send(403).send({ message: Forbidden })
+            return res.send(403).send({ message: "Forbidden" })
         }
         req.decoded = decoded;
         next();
@@ -37,6 +37,18 @@ async function run() {
         const toolCollection = client.db("electronic_tool").collection("tools");
         const bookingCollection = client.db("electronic_tool").collection("bookings");
         const userCollection = client.db("electronic_tool").collection("users");
+
+        // middleware
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role) {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
 
         // user data
         app.put("/user/:email", async (req, res) => {
@@ -59,14 +71,24 @@ async function run() {
         })
 
         // update a user to admin 
-        app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+        app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
             const filter = { email: email };
             const updateDoc = {
-                $set: { role: "admin" }
-            };
+                $set: { role: "admin" },
+            }
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
+        })
+
+        // Only for admin
+        app.get("/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role;
+            res.send({ admin: isAdmin });
         })
 
         // All tools
