@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 require("dotenv").config();
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // middle ware
 app.use(cors());
@@ -14,6 +15,8 @@ const uri = `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+// json web token
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -22,7 +25,7 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            return res.send(403).send({ message: "Forbidden" })
+            return res.send(403).sendStatus({ message: "Forbidden" })
         }
         req.decoded = decoded;
         next();
@@ -38,8 +41,9 @@ async function run() {
         const bookingCollection = client.db("electronic_tool").collection("bookings");
         const userCollection = client.db("electronic_tool").collection("users");
         const reviewCollection = client.db("electronic_tool").collection("reviews");
+        const paymentCollection = client.db("electronic_tool").collection("payments");
 
-        // middleware
+        // middleware verifyAdmin
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
             const requesterAccount = await userCollection.findOne({ email: requester });
@@ -121,13 +125,6 @@ async function run() {
             res.send(bookings);
         })
 
-        // get booking for payment
-        app.get('/booking/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const booking = await bookingCollection.findOne(query);
-            res.send(booking);
-        })
 
         // get booking data per user
         app.get("/booking/user", verifyJWT, async (req, res) => {
@@ -141,6 +138,14 @@ async function run() {
             else {
                 return res.status(403).send({ message: "Forbidden" })
             }
+        })
+
+        // get booking for payment
+        app.get("/booking/:id", verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectID(id) };
+            const booking = await bookingCollection.findOne(query);
+            res.send(booking);
         })
 
         // book data 
@@ -161,6 +166,34 @@ async function run() {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.send(result);
+        })
+
+        // Payment=intent API
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const tool = req.body;
+            const price = tool.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+
+        app.patch("/booking/:id", async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectID(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
         })
 
     }
