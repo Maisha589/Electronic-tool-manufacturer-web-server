@@ -25,7 +25,7 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            return res.sendStatus(403).send({ message: "Forbidden" })
+            return res.status(403).send({ message: "Forbidden" })
         }
         req.decoded = decoded;
         next();
@@ -138,7 +138,7 @@ async function run() {
         })
 
         // get all booking order data
-        app.get("/booking", verifyJWT, verifyAdmin, async (req, res) => {
+        app.get("/booking", async (req, res) => {
             const bookings = await bookingCollection.find().toArray();
             res.send(bookings);
         })
