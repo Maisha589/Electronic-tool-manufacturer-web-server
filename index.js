@@ -9,14 +9,16 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // middle ware
 
-const corsConfig = {
-    origin: ["https://sheltered-garden-62351.herokuapp.com/"],
-    Credential: true,
-    methods: ["GET", "POST", "DELETE", "PUT"]
-}
+// const corsConfig = {
+//     origin: ["https://sheltered-garden-62351.herokuapp.com/"],
+//     Credential: true,
+//     methods: ["GET", "POST", "DELETE", "PUT"]
+// }
 
-app.use(cors(corsConfig));
-app.options("*", cors(corsConfig))
+app.use(cors());
+
+// app.use(cors(corsConfig));
+// app.options("*", cors(corsConfig))
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.mqmnn.mongodb.net/?retryWrites=true&w=majority`;
