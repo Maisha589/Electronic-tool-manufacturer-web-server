@@ -25,7 +25,7 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            return res.send(403).sendStatus({ message: "Forbidden" })
+            return res.sendStatus(403).send({ message: "Forbidden" })
         }
         req.decoded = decoded;
         next();
@@ -75,6 +75,15 @@ async function run() {
             res.send(users);
         })
 
+        // delete a user
+        app.delete("/user/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            // const filter = { id: id };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
+
         // update a user to admin 
         app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
@@ -102,6 +111,15 @@ async function run() {
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
             res.send(tools);
+        })
+
+        // Delete a tool
+        app.delete("/tools/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            // const filter = { id: id };
+            const result = await toolCollection.deleteOne(query);
+            res.send(result);
         })
 
         // tools add
@@ -152,6 +170,15 @@ async function run() {
         app.post("/booking", async (req, res) => {
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
+            res.send(result);
+        })
+
+        // Cancel a  order
+        app.delete("/booking/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            // const filter = { id: id };
+            const result = await bookingCollection.deleteOne(query);
             res.send(result);
         })
 
