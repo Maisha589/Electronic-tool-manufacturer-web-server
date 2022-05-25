@@ -8,10 +8,18 @@ const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // middle ware
-app.use(cors());
+
+const corsConfig = {
+    origin: ["https://sheltered-garden-62351.herokuapp.com/"],
+    Credential: true,
+    methods: ["GET", "POST", "DELETE", "PUT"]
+}
+
+app.use(cors(corsConfig));
+app.options("*", cors(corsConfig))
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.mqmnn.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.mqmnn.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
