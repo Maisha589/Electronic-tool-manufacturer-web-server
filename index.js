@@ -120,7 +120,7 @@ async function run() {
         })
 
         // All tools
-        app.get("/tools", verifyJWT, async (req, res) => {
+        app.get("/tools", async (req, res) => {
             const query = {};
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
@@ -209,7 +209,7 @@ async function run() {
             res.send(result);
         })
 
-        // Payment=intent API
+        // Payment-intent API
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const tool = req.body;
             const price = tool.totalPrice;
