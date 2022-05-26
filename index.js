@@ -54,16 +54,16 @@ async function run() {
         const paymentCollection = client.db("electronic_tool").collection("payments");
 
         // middleware verifyAdmin
-        const verifyAdmin = async (req, res, next) => {
-            const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester });
-            if (requesterAccount.role) {
-                next();
-            }
-            else {
-                res.status(403).send({ message: 'forbidden' });
-            }
-        }
+        // const verifyAdmin = async (req, res, next) => {
+        //     const requester = req.decoded.email;
+        //     const requesterAccount = await userCollection.findOne({ email: requester });
+        //     if (requesterAccount.role) {
+        //         next();
+        //     }
+        //     else {
+        //         res.status(403).send({ message: 'forbidden' });
+        //     }
+        // }
 
         // user data
         app.put("/user/:email", async (req, res) => {
@@ -95,7 +95,7 @@ async function run() {
         })
 
         // update a user to admin 
-        app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
+        app.put("/user/admin/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             const requester = req.decoded.email;
             const requesterAccount = await userCollection.findOne({ email: requester });
@@ -111,7 +111,7 @@ async function run() {
         // update a user details
 
         // Only for admin
-        app.get("/admin/:email", verifyAdmin, verifyJWT, async (req, res) => {
+        app.get("/admin/:email", verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role;
@@ -120,7 +120,7 @@ async function run() {
         })
 
         // All tools
-        app.get("/tools", verifyAdmin, verifyJWT, async (req, res) => {
+        app.get("/tools", verifyJWT, async (req, res) => {
             const query = {};
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
@@ -128,7 +128,7 @@ async function run() {
         })
 
         // Delete a tool
-        app.delete("/tools/:id", verifyAdmin, verifyJWT, async (req, res) => {
+        app.delete("/tools/:id", verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             // const filter = { id: id };
