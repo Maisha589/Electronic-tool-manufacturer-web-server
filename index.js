@@ -66,7 +66,8 @@ async function run() {
                 $set: { user }
             }
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            res.send(result);
+            const token = jwt.sign({ email: email }, process.env.JSON_WEB_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token });
         })
 
         // update a user details
@@ -103,8 +104,6 @@ async function run() {
         // update a user to admin 
         app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester });
             const filter = { email: email };
             const updateDoc = {
                 $set: { role: "admin" },
@@ -116,7 +115,7 @@ async function run() {
 
 
         // Only for admin
-        app.get("/admin/:email", verifyJWT, async (req, res) => {
+        app.get("/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role;
@@ -140,7 +139,7 @@ async function run() {
         })
 
         // tools add
-        app.post("/tools", verifyJWT, verifyAdmin, async (req, res) => {
+        app.post("/tools", verifyJWT, async (req, res) => {
             const tool = req.body;
             const result = await toolCollection.insertOne(tool);
             res.send(result);
@@ -191,7 +190,7 @@ async function run() {
         })
 
         // Cancel a  order
-        app.delete("/booking/:id", verifyJWT, async (req, res) => {
+        app.delete("/booking/:id", verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await bookingCollection.deleteOne(query);
