@@ -111,15 +111,16 @@ async function run() {
         // update a user details
 
         // Only for admin
-        app.get("/admin/:email", async (req, res) => {
+        app.get("/admin/:email", verifyAdmin, verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role;
+            // console.log(isAdmin);
             res.send({ admin: isAdmin });
         })
 
         // All tools
-        app.get("/tools", async (req, res) => {
+        app.get("/tools", verifyAdmin, verifyJWT, async (req, res) => {
             const query = {};
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
@@ -127,7 +128,7 @@ async function run() {
         })
 
         // Delete a tool
-        app.delete("/tools/:id", async (req, res) => {
+        app.delete("/tools/:id", verifyAdmin, verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             // const filter = { id: id };
